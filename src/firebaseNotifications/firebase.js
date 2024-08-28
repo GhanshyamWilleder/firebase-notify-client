@@ -1,9 +1,11 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // Firebase Cloud Messaging Configuration File.
 // Read more at https://firebase.google.com/docs/cloud-messaging/js/client && https://firebase.google.com/docs/cloud-messaging/js/receive
 
 import { initializeApp } from "firebase/app"
 import { getMessaging, getToken, onMessage } from "firebase/messaging"
 import { useLogs } from "../LogContext"
+import { useEffect, useCallback } from "react"
 
 const firebaseConfig = {
   apiKey: "AIzaSyCRSGFUtB_6bB1WQSk004JAid9BeUMAdPc",
@@ -20,8 +22,9 @@ initializeApp(firebaseConfig)
 const messaging = getMessaging()
 
 export function Firebase() {
-  const { clearLogs, addLog } = useLogs()
-  const requestForToken = () => {
+  const { addLog } = useLogs()
+
+  const requestForToken = useCallback(() => {
     // The method getToken(): Promise<string> allows FCM to use the VAPID key credential
     // when sending message requests to different push services
     return getToken(messaging, {
@@ -31,7 +34,6 @@ export function Firebase() {
         if (currentToken) {
           //setting the token in the local storage
           console.log("current token for client: ", currentToken)
-          clearLogs()
           addLog("current token for client: " + currentToken)
 
           if (
@@ -51,7 +53,12 @@ export function Firebase() {
       .catch((err) => {
         console.log("An error occurred while retrieving token. ", err)
       })
-  }
+  }, [addLog])
+
+  useEffect(() => {
+    addLog("Firebase initialized")
+    requestForToken()
+  }, [])
 
   // Handle incoming messages. Called when:
   // - a message is received while the app has focus
