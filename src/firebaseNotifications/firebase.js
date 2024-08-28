@@ -35,8 +35,6 @@ export function Firebase() {
             } else {
               addLog("Service worker not available.")
             }
-          } else {
-            addLog("Notification permission denied. Asking again...")
           }
         })
         .catch((err) => {
