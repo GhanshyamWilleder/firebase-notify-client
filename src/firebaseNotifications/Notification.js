@@ -27,7 +27,7 @@ const Notification = () => {
 
   onMessageListener()
     .then((payload) => {
-      console.log("payload: ", payload)
+    //   console.log("payload: ", payload)
       setNotification({
         title: payload?.title,
         body: payload?.body,

@@ -4,7 +4,7 @@ import { ToastContainer, Zoom } from "react-toastify"
 import Notification from "./firebaseNotifications/Notification"
 import { idbKeyval } from "./idbHelper" // Adjust the path if necessary
 
-const API_URL = "http://localhost:8080"
+const API_URL = "https://firebase-notify-server.onrender.com"
 
 function App() {
   const [notificationCount, setNotificationCount] = useState(0)
