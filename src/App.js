@@ -2,8 +2,9 @@ import React, { useState, useCallback, useEffect } from "react"
 import "./App.css"
 import { ToastContainer, Zoom } from "react-toastify"
 import Notification from "./firebaseNotifications/Notification"
+import { idbKeyval } from "./idbHelper" // Adjust the path if necessary
 
-const API_URL = "http://localhost:8000"
+const API_URL = "http://localhost:8080"
 
 function App() {
   const [notificationCount, setNotificationCount] = useState(0)
@@ -11,21 +12,17 @@ function App() {
   const updateNotificationCount = useCallback(() => {
     setNotificationCount((prevCount) => {
       const newCount = prevCount + 1
-      console.log("Updating notification count to:", newCount) // Logging the count
+      // console.log("Updating notification count to:", newCount)
       setAppBadge(newCount)
       return newCount
     })
   }, [])
 
   const resetNotificationCount = useCallback(() => {
-    console.log("Resetting notification count") // Logging reset action
+    // console.log("Resetting notification count")
     setNotificationCount(0)
     clearAppBadge()
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: "resetNotificationCount",
-      })
-    }
+    idbKeyval.set("notificationCount", 0) // Reset in IndexedDB as well
   }, [])
 
   const setAppBadge = (count) => {
@@ -48,11 +45,22 @@ function App() {
     }
   }
 
-  useEffect(() => {
-    let messageHandler
+  const fetchNotificationCount = async () => {
+    // console.log("Fetching notification count from IndexedDB")
+    const count = await idbKeyval.get("notificationCount")
+    if (count !== undefined) {
+      setNotificationCount(count)
+      setAppBadge(count)
+    }
+  }
+  let timerId = setInterval(() => {
+    fetchNotificationCount()
+  }, 20000)
 
-    messageHandler = (event) => {
-      console.log("Message received from service worker:", event)
+  useEffect(() => {
+    // Retrieve notification count from IndexedDB on load
+    const messageHandler = (event) => {
+      // console.log("Message received from service worker:", event)
       if (event.data.notificationCount !== undefined) {
         setNotificationCount(event.data.notificationCount)
         setAppBadge(event.data.notificationCount)
@@ -65,17 +73,17 @@ function App() {
 
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
-        resetNotificationCount()
+        setTimeout(() => {
+          resetNotificationCount()
+        }, 2000)
       }
     })
 
-    // Cleanup function to remove the event listener
     return () => {
-      if (messageHandler) {
-        navigator.serviceWorker.removeEventListener("message", messageHandler)
-      }
+      navigator.serviceWorker.removeEventListener("message", messageHandler)
+      clearInterval(timerId)
     }
-  }, [updateNotificationCount, resetNotificationCount])
+  }, [timerId, updateNotificationCount, resetNotificationCount])
 
   const sendNotification = async () => {
     const tokenId = localStorage.getItem("fcmToken") || ""
@@ -101,6 +109,50 @@ function App() {
     }
   }
 
+  const subscribeNotification = async () => {
+    const tokenId = localStorage.getItem("fcmToken") || ""
+    try {
+      const response = await fetch(`${API_URL}/subscribe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tokenId: tokenId,
+        }),
+      })
+      if (response.ok) {
+        console.log("Subscribed to notifications")
+      } else {
+        console.error("Failed to subscribe to notifications")
+      }
+    } catch (error) {
+      console.error("Failed to subscribe to notifications:", error)
+    }
+  }
+
+  const unsubscribeNotification = async () => {
+    const tokenId = localStorage.getItem("fcmToken") || ""
+    try {
+      const response = await fetch(`${API_URL}/unsubscribe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tokenId: tokenId,
+        }),
+      })
+      if (response.ok) {
+        console.log("Unsubscribed from notifications")
+      } else {
+        console.error("Failed to unsubscribe from notifications")
+      }
+    } catch (error) {
+      console.error("Failed to unsubscribe from notifications:", error)
+    }
+  }
+
   return (
     <div className="App">
       <ToastContainer
@@ -120,7 +172,15 @@ function App() {
       <button id="subscribe" onClick={sendNotification}>
         Send
       </button>
-      
+      <div style={{ display: "flex" }}>
+        <button id="subscribe" onClick={subscribeNotification}>
+          subscribe
+        </button>
+
+        <button id="subscribe" onClick={unsubscribeNotification}>
+          unsubscribe
+        </button>
+      </div>
       {notificationCount > 0 && (
         <div className="notification-badge">{notificationCount}</div>
       )}
