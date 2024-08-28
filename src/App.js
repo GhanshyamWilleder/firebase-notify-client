@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react"
 import "./App.css"
 import { ToastContainer, Zoom } from "react-toastify"
-import Notification from "./firebaseNotifications/Notification"
+import NotificationBox from "./firebaseNotifications/NotificationBox"
 import { idbKeyval } from "./idbHelper" // Adjust the path if necessary
 
 const API_URL = "https://firebase-notify-server.onrender.com"
@@ -86,6 +86,21 @@ function App() {
   }, [timerId, updateNotificationCount, resetNotificationCount])
 
   const sendNotification = async () => {
+    const result = await Notification.requestPermission()
+    if (result === "denied") {
+      console.error("The user explicitly denied the permission request.")
+      return
+    }
+    if (result === "granted") {
+      console.info("The user accepted the permission request.")
+    }
+    const registration = await navigator.serviceWorker.getRegistration()
+    const subscribed = await registration.pushManager.getSubscription()
+    if (subscribed) {
+      console.info("User is already subscribed.")
+      return
+    }
+
     const tokenId = localStorage.getItem("fcmToken") || ""
     try {
       const response = await fetch(`${API_URL}/send`, {
@@ -110,6 +125,20 @@ function App() {
   }
 
   const subscribeNotification = async () => {
+    const result = await Notification.requestPermission()
+    if (result === "denied") {
+      console.error("The user explicitly denied the permission request.")
+      return
+    }
+    if (result === "granted") {
+      console.info("The user accepted the permission request.")
+    }
+    const registration = await navigator.serviceWorker.getRegistration()
+    const subscribed = await registration.pushManager.getSubscription()
+    if (subscribed) {
+      console.info("User is already subscribed.")
+      return
+    }
     const tokenId = localStorage.getItem("fcmToken") || ""
     try {
       const response = await fetch(`${API_URL}/subscribe`, {
@@ -168,7 +197,7 @@ function App() {
         transition={Zoom}
         closeButton={false}
       />
-      <Notification />
+      <NotificationBox />
       <button id="subscribe" onClick={sendNotification}>
         Send
       </button>
