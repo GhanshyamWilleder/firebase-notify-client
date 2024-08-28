@@ -27,10 +27,16 @@ export function Firebase() {
         .then((permission) => {
           if (permission === "granted") {
             addLog("Notification permission granted.")
-            requestForToken() // Request token if permission is granted
+            //check if the service worker is available
+            if ("serviceWorker" in navigator) {
+              navigator.serviceWorker.ready.then(() => {
+                requestForToken()
+              })
+            } else {
+              addLog("Service worker not available.")
+            }
           } else {
             addLog("Notification permission denied. Asking again...")
-            askPermission() // Ask again if permission is denied
           }
         })
         .catch((err) => {

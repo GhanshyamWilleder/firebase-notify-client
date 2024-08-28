@@ -1,6 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react"
 import { Firebase } from "./firebase"
 import { toast } from "react-toastify"
+
 
 const NotificationBox = () => {
   const { onMessageListener } = Firebase()
