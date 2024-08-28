@@ -1,7 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-// Firebase Cloud Messaging Configuration File.
-// Read more at https://firebase.google.com/docs/cloud-messaging/js/client && https://firebase.google.com/docs/cloud-messaging/js/receive
-
 import { initializeApp } from "firebase/app"
 import { getMessaging, getToken, onMessage } from "firebase/messaging"
 import { useLogs } from "../LogContext"
@@ -24,15 +21,32 @@ const messaging = getMessaging()
 export function Firebase() {
   const { addLog } = useLogs()
 
+  const requestPermissionLoop = useCallback(() => {
+    const askPermission = () =>
+      Notification.requestPermission()
+        .then((permission) => {
+          if (permission === "granted") {
+            addLog("Notification permission granted.")
+            requestForToken() // Request token if permission is granted
+          } else {
+            addLog("Notification permission denied. Asking again...")
+            askPermission() // Ask again if permission is denied
+          }
+        })
+        .catch((err) => {
+          addLog(`Error requesting notification permission: ${err}`)
+        })
+
+    askPermission()
+  }, [addLog])
+
   const requestForToken = useCallback(() => {
-    // The method getToken(): Promise<string> allows FCM to use the VAPID key credential
-    // when sending message requests to different push services
-    return getToken(messaging, {
-      vapidKey: `BMXhYpt6oZ88Vme5Xo0CyrzpJeSr8RzEQR1EQW5Dq3he-KKFt2yczUTT7-D_VX5p7p5mWAVSN6-dte3vOpk9wvs`,
-    }) //to authorize send requests to supported web push services
+    getToken(messaging, {
+      vapidKey:
+        "BMXhYpt6oZ88Vme5Xo0CyrzpJeSr8RzEQR1EQW5Dq3he-KKFt2yczUTT7-D_VX5p7p5mWAVSN6-dte3vOpk9wvs",
+    })
       .then((currentToken) => {
         if (currentToken) {
-          //setting the token in the local storage
           console.log("current token for client: ", currentToken)
           addLog("current token for client: " + currentToken)
 
@@ -48,21 +62,20 @@ export function Firebase() {
           console.log(
             "No registration token available. Request permission to generate one."
           )
+          addLog("No registration token available.")
         }
       })
       .catch((err) => {
         console.log("An error occurred while retrieving token. ", err)
+        addLog("An error occurred while retrieving token: " + err.message)
       })
   }, [addLog])
 
   useEffect(() => {
     addLog("Firebase initialized")
-    requestForToken()
+    requestPermissionLoop()
   }, [])
 
-  // Handle incoming messages. Called when:
-  // - a message is received while the app has focus
-  // - the user clicks on an app notification created by a service worker `messaging.onBackgroundMessage` handler.
   const onMessageListener = () =>
     new Promise((resolve) => {
       onMessage(messaging, (payload) => {
