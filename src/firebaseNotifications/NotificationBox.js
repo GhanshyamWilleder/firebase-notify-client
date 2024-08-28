@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react"
-import { requestForToken, onMessageListener } from "./firebase"
+import { Firebase } from "./firebase"
 import { toast } from "react-toastify"
 
 const NotificationBox = () => {
+  const { requestForToken, onMessageListener } = Firebase()
   const [notification, setNotification] = useState({ title: "", body: "" })
   const notify = () => toast(<ToastDisplay />)
 
@@ -18,16 +19,17 @@ const NotificationBox = () => {
   }
 
   useEffect(() => {
+    requestForToken()
     if (notification?.title) {
       notify()
     }
   }, [notification])
 
-  requestForToken()
+  
 
   onMessageListener()
     .then((payload) => {
-    //   console.log("payload: ", payload)
+      //   console.log("payload: ", payload)
       setNotification({
         title: payload?.title,
         body: payload?.body,

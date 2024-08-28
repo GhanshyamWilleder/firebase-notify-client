@@ -2,6 +2,8 @@ import React, { useState, useCallback, useEffect } from "react"
 import "./App.css"
 import { ToastContainer, Zoom } from "react-toastify"
 import NotificationBox from "./firebaseNotifications/NotificationBox"
+import { LogProvider } from "./LogContext"
+import Logger from "./Logger"
 import { idbKeyval } from "./idbHelper" // Adjust the path if necessary
 
 const API_URL = "https://firebase-notify-server.onrender.com"
@@ -183,37 +185,40 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <ToastContainer
-        position="bottom-center"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={true}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        transition={Zoom}
-        closeButton={false}
-      />
-      <NotificationBox />
-      <button id="subscribe" onClick={sendNotification}>
-        Send
-      </button>
-      <div style={{ display: "flex" }}>
-        <button id="subscribe" onClick={subscribeNotification}>
-          subscribe
+    <LogProvider>
+      <div className="App">
+        <ToastContainer
+          position="top-center"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={true}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          transition={Zoom}
+          closeButton={false}
+        />
+        <NotificationBox />
+        <button id="subscribe" onClick={sendNotification}>
+          Send
         </button>
+        <div style={{ display: "flex" }}>
+          <button id="subscribe" onClick={subscribeNotification}>
+            subscribe
+          </button>
 
-        <button id="subscribe" onClick={unsubscribeNotification}>
-          unsubscribe
-        </button>
+          <button id="subscribe" onClick={unsubscribeNotification}>
+            unsubscribe
+          </button>
+        </div>
+        <Logger />
+        {notificationCount > 0 && (
+          <div className="notification-badge">{notificationCount}</div>
+        )}
       </div>
-      {notificationCount > 0 && (
-        <div className="notification-badge">{notificationCount}</div>
-      )}
-    </div>
+    </LogProvider>
   )
 }
 
