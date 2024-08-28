@@ -37,6 +37,7 @@ export function Firebase() {
             }
           } else {
             addLog("Notification permission denied. Asking again...")
+            askPermission()
           }
         })
         .catch((err) => {
