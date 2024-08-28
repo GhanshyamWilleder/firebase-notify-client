@@ -3,7 +3,7 @@ import "./App.css"
 import { ToastContainer, Zoom } from "react-toastify"
 import Notification from "./firebaseNotifications/Notification"
 
-const API_URL = "http://localhost:8000"
+const API_URL = "https://firebase-notify-server.onrender.com"
 
 function App() {
   const [notificationCount, setNotificationCount] = useState(0)
